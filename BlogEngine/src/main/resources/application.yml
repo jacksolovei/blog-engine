@@ -2,5 +2,13 @@ spring.datasource.url: jdbc:mysql://localhost:3306/blog?useUnicode=true&characte
 spring.datasource.username: root
 spring.datasource.password: Khol@1406
 spring.jpa.properties.hibernate.dialect: org.hibernate.dialect.MySQL5Dialect
-spring.jpa.hibernate.ddl-auto: update
+spring.jpa.hibernate.ddl-auto: validate
 spring.jpa.show-sql: true
+
+blog.title: DevPub
+blog.subtitle: Рассказы разработчика
+blog.phone: +7 903 666-44-55
+blog.email: mail@mail.ru
+blog.copyright: Дмитрий Сергеев
+blog.copyrightFrom: 2005
+

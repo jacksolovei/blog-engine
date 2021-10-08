@@ -17,7 +17,7 @@ public class Post {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "moderation_status", columnDefinition = "enum('NEW', 'ACCEPTED', 'DECLINED') default 'NEW'", nullable = false)
-    private moderationStatus status;
+    private ModerationStatus status;
 
     @Column(name = "moderator_id")
     private int moderatorId;
@@ -66,11 +66,11 @@ public class Post {
         this.isActive = isActive;
     }
 
-    public moderationStatus getStatus() {
+    public ModerationStatus getStatus() {
         return status;
     }
 
-    public void setStatus(moderationStatus status) {
+    public void setStatus(ModerationStatus status) {
         this.status = status;
     }
 
