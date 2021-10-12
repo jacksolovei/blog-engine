@@ -1,25 +1,14 @@
 package main.api.response;
 
+import lombok.Getter;
+import lombok.Setter;
+import main.dto.PostDto;
 
 import java.util.List;
 
+@Getter
+@Setter
 public class ApiPostListResponse {
     private int count;
-    private List<ApiPostResponse> posts;
-
-    public int getCount() {
-        return count;
-    }
-
-    public void setCount(int count) {
-        this.count = count;
-    }
-
-    public List<ApiPostResponse> getPosts() {
-        return posts;
-    }
-
-    public void setPosts(List<ApiPostResponse> posts) {
-        this.posts = posts;
-    }
+    private List<PostDto> posts;
 }

@@ -1,7 +1,7 @@
 package main.service;
 
 import main.api.response.TagListResponse;
-import main.api.response.TagResponse;
+import main.dto.TagDto;
 import main.model.Tag;
 import main.repository.PostRepository;
 import main.repository.TagRepository;
@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TagService {
@@ -19,29 +20,24 @@ public class TagService {
     @Autowired
     private TagRepository tagRepository;
 
-    TagListResponse tagListResponse = new TagListResponse();
-    ArrayList<TagResponse> tags = new ArrayList<>();
+    @Autowired
+    private MapperService mapperService;
 
     public TagListResponse getTags() {
-        List<Tag> tagsFromRep = tagRepository.findAll();
-        for (Tag tag : tagsFromRep) {
-            this.addToList(tag.getName());
-        }
-        tagListResponse.setTags(tags);
+        TagListResponse tagListResponse = new TagListResponse();
+        List<Tag> tags = tagRepository.findAll();
+        List<TagDto> tagDtoList = tags.stream().map(t -> mapperService.convertTagToDto(t))
+                .collect(Collectors.toList());
+        tagListResponse.setTags(tagDtoList);
         return tagListResponse;
     }
 
     public TagListResponse getTagByQuery(String query) {
-        this.addToList(query);
-        tagListResponse.setTags(tags);
+        TagListResponse tagListResponse = new TagListResponse();
+        Tag tag = tagRepository.findTagByName(query);
+        List<TagDto> tagDtoList = new ArrayList<>();
+        tagDtoList.add(mapperService.convertTagToDto(tag));
+        tagListResponse.setTags(tagDtoList);
         return tagListResponse;
-    }
-
-    private void addToList(String tag) {
-        double countPostsByPopularTag = postRepository.findPostCountByPopularTag();
-        double count = postRepository.findActivePostsCount();
-        double countPostsByTag = postRepository.findPostCountByTag(tag);
-        double weight = (double) Math.round((countPostsByTag / count) * (1 / (countPostsByPopularTag / count)) * 100) / 100;
-        tags.add(new TagResponse(tag, weight));
     }
 }

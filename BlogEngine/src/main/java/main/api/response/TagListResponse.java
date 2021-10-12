@@ -1,15 +1,13 @@
 package main.api.response;
 
-import java.util.ArrayList;
+import lombok.Getter;
+import lombok.Setter;
+import main.dto.TagDto;
 
+import java.util.List;
+
+@Getter
+@Setter
 public class TagListResponse {
-    private ArrayList<TagResponse> tags;
-
-    public ArrayList<TagResponse> getTags() {
-        return tags;
-    }
-
-    public void setTags(ArrayList<TagResponse> tags) {
-        this.tags = tags;
-    }
+    private List<TagDto> tags;
 }

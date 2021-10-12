@@ -3,7 +3,6 @@ package main.controller;
 import main.api.response.InitResponse;
 import main.api.response.SettingsResponse;
 import main.api.response.TagListResponse;
-import main.api.response.TagResponse;
 import main.service.SettingsService;
 import main.service.TagService;
 import org.springframework.http.ResponseEntity;
@@ -29,11 +28,10 @@ public class ApiGeneralController {
     private InitResponse init() {
         return initResponse;
     }
-    
+
     @GetMapping("/settings")
     private ResponseEntity<SettingsResponse> settings() {
         return ResponseEntity.ok(settingsService.getGlobalSettings());
-        //return new ResponseEntity<>(settingsService.getGlobalSettrings(), HttpStatus.BAD_REQUEST);
     }
 
     @GetMapping("/tag")
@@ -43,30 +41,4 @@ public class ApiGeneralController {
         }
         return ResponseEntity.ok(tagService.getTagByQuery(query));
     }
-
-    /*private SettingsResponse settings() {
-        return settingsService.getGlobalSettrings();
-        //return new SettingsResponse();
-    }*/
-
-    //GET api/init
-    /*{
-        "title": "DevPub",
-            "subtitle": "Рассказы разработчиков",
-            "phone": "+7 903 666-44-55",
-            "email": "mail@mail.ru",
-            "copyright": "Дмитрий Сергеев",
-            "copyrightFrom": "2005"
-    }*/
-
-    //GET api/settings
-    /*{
-        "MULTIUSER_MODE": false,
-            "POST_PREMODERATION": true,
-            "STATISTICS_IS_PUBLIC": true
-    }*/
-
-    //GET api/tag
-
-
 }

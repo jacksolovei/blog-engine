@@ -23,8 +23,6 @@ public class ApiPostController {
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(defaultValue = "recent") String mode) {
-
         return ResponseEntity.ok(apiPostService.getPosts(offset, limit, mode));
-        //return new ResponseEntity<>(settingsService.getGlobalSettrings(), HttpStatus.BAD_REQUEST);
     }
 }
