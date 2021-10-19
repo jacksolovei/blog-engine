@@ -1,14 +1,14 @@
 package main.service;
 
+import lombok.AllArgsConstructor;
 import main.api.response.SettingsResponse;
 import main.repository.SettingsRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
+@AllArgsConstructor
 public class SettingsService {
-    @Autowired
-    private SettingsRepository settingsRepository;
+    private final SettingsRepository settingsRepository;
 
     public SettingsResponse getGlobalSettings() {
         SettingsResponse settingsResponse = new SettingsResponse();

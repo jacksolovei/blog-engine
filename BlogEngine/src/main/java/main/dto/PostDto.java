@@ -15,6 +15,8 @@ public class PostDto {
     @JsonIgnoreProperties({"email", "photo", "moderation", "moderationCount", "settings"})
     private UserDto user;
     private String title;
+    @JsonIgnore
+    private String text;
     private String announce;
     private int likeCount;
     private int dislikeCount;

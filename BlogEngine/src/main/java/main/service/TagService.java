@@ -1,43 +1,29 @@
 package main.service;
 
+import lombok.AllArgsConstructor;
 import main.api.response.TagListResponse;
-import main.dto.TagDto;
-import main.model.Tag;
-import main.repository.PostRepository;
+import main.api.response.TagResponseProjection;
 import main.repository.TagRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@AllArgsConstructor
 public class TagService {
-    @Autowired
-    private PostRepository postRepository;
+    private final TagRepository tagRepository;
 
-    @Autowired
-    private TagRepository tagRepository;
-
-    @Autowired
-    private MapperService mapperService;
-
-    public TagListResponse getTags() {
+    public TagListResponse getTags(String query) {
         TagListResponse tagListResponse = new TagListResponse();
-        List<Tag> tags = tagRepository.findAll();
-        List<TagDto> tagDtoList = tags.stream().map(t -> mapperService.convertTagToDto(t))
-                .collect(Collectors.toList());
-        tagListResponse.setTags(tagDtoList);
-        return tagListResponse;
-    }
-
-    public TagListResponse getTagByQuery(String query) {
-        TagListResponse tagListResponse = new TagListResponse();
-        Tag tag = tagRepository.findTagByName(query);
-        List<TagDto> tagDtoList = new ArrayList<>();
-        tagDtoList.add(mapperService.convertTagToDto(tag));
-        tagListResponse.setTags(tagDtoList);
+        List<TagResponseProjection> tags = tagRepository.findAllTags();
+        if (query == null) {
+            tagListResponse.setTags(tags);
+        } else {
+            tagListResponse.setTags(tags.stream()
+                    .filter(t -> t.getName().equals(query))
+                    .collect(Collectors.toList()));
+        }
         return tagListResponse;
     }
 }

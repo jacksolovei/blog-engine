@@ -1,5 +1,6 @@
 package main.controller;
 
+import lombok.AllArgsConstructor;
 import main.api.response.InitResponse;
 import main.api.response.SettingsResponse;
 import main.api.response.TagListResponse;
@@ -13,16 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api")
+@AllArgsConstructor
 public class ApiGeneralController {
     private final InitResponse initResponse;
     private final SettingsService settingsService;
     private final TagService tagService;
-
-    public ApiGeneralController(InitResponse initResponse, SettingsService settingsService, TagService tagService) {
-        this.initResponse = initResponse;
-        this.settingsService = settingsService;
-        this.tagService = tagService;
-    }
 
     @GetMapping("/init")
     private InitResponse init() {
@@ -36,9 +32,6 @@ public class ApiGeneralController {
 
     @GetMapping("/tag")
     private ResponseEntity<TagListResponse> tags(@RequestParam(required = false) String query) {
-        if (query == null) {
-            return ResponseEntity.ok(tagService.getTags());
-        }
-        return ResponseEntity.ok(tagService.getTagByQuery(query));
+        return ResponseEntity.ok(tagService.getTags(query));
     }
 }
