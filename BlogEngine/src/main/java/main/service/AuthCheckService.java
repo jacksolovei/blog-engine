@@ -1,19 +1,16 @@
 package main.service;
 
+import lombok.AllArgsConstructor;
 import main.api.response.AuthCheckResponse;
 import main.model.User;
 import main.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
+@AllArgsConstructor
 public class AuthCheckService {
-
-    @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    MapperService mapperService;
+    private final UserRepository userRepository;
+    private final MapperService mapperService;
 
     public AuthCheckResponse getAuthCheck() {
         AuthCheckResponse authCheckResponse = new AuthCheckResponse();

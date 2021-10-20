@@ -1,5 +1,6 @@
 package main.controller;
 
+import lombok.AllArgsConstructor;
 import main.api.response.ApiPostListResponse;
 import main.service.ApiPostService;
 import org.springframework.http.ResponseEntity;
@@ -10,13 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api")
+@AllArgsConstructor
 public class ApiPostController {
-
     private final ApiPostService apiPostService;
-
-    public ApiPostController(ApiPostService apiPostService) {
-        this.apiPostService = apiPostService;
-    }
 
     @GetMapping("/post")
     private ResponseEntity<ApiPostListResponse> posts(

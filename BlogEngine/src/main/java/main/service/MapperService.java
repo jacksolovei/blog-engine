@@ -1,22 +1,19 @@
 package main.service;
 
+import lombok.AllArgsConstructor;
 import main.dto.PostDto;
-import main.dto.TagDto;
 import main.dto.UserDto;
 import main.model.Post;
-import main.model.Tag;
 import main.model.User;
 import main.repository.PostRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
 
 @Service
+@AllArgsConstructor
 public class MapperService {
-
-    @Autowired
-    private PostRepository postRepository;
+    private final PostRepository postRepository;
 
     public PostDto convertPostToDto(Post post) {
         PostDto postDto = new PostDto();
@@ -25,7 +22,9 @@ public class MapperService {
         postDto.setTimestamp(post.getTime().getTime() / 1000);
         postDto.setUser(convertUserToDto(post.getUser()));
         postDto.setTitle(post.getTitle());
-        postDto.setAnnounce(post.getText());
+        postDto.setText(post.getText());
+        String postDtoText = postDto.getText();
+        postDto.setAnnounce(postDtoText.length() < 150 ? postDtoText : postDtoText.substring(0, 150) + "...");
         postDto.setLikeCount(postRepository.findPostLikesCount(post.getId()));
         postDto.setDislikeCount(postRepository.findPostDislikesCount(post.getId()));
         postDto.setCommentCount(postRepository.findPostCommentsCount(post.getId()));
@@ -40,7 +39,7 @@ public class MapperService {
         post.setTime(new Date(postDto.getTimestamp() * 1000));
         post.setUser(convertDtoToUser(postDto.getUser()));
         post.setTitle(postDto.getTitle());
-        post.setText(postDto.getAnnounce());
+        post.setText(postDto.getText());
         return post;
     }
 
@@ -73,27 +72,5 @@ public class MapperService {
         user.setEmail(userDto.getEmail());
         user.setPhoto(userDto.getPhoto());
         return user;
-    }
-
-    public TagDto convertTagToDto(Tag tag) {
-        TagDto tagDto = new TagDto();
-        tagDto.setId(tag.getId());
-        tagDto.setName(tag.getName());
-        tagDto.setWeight(getTagWeight(tag.getName()));
-        return tagDto;
-    }
-
-    public Tag convertDtoToTag(TagDto tagDto) {
-        Tag tag = new Tag();
-        tag.setId(tagDto.getId());
-        tag.setName(tagDto.getName());
-        return tag;
-    }
-
-    private double getTagWeight(String tagName) {
-        double countPostsByPopularTag = postRepository.findPostCountByPopularTag();
-        double count = postRepository.findActivePostsCount();
-        double countPostsByTag = postRepository.findPostCountByTag(tagName);
-        return (double) Math.round((countPostsByTag / count) * (1 / (countPostsByPopularTag / count)) * 100) / 100;
     }
 }

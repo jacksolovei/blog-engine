@@ -13,23 +13,27 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED' " +
             "ORDER BY time DESC",
-            countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+            countQuery = "SELECT COUNT(*) FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED'",
+            nativeQuery = true)
     Page<Post> findRecentPosts(Pageable pageable);
 
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED' " +
             "ORDER BY time ASC",
-            countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+            countQuery = "SELECT COUNT(*) FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED'",
+            nativeQuery = true)
     Page<Post> findEarlyPosts(Pageable pageable);
 
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 " +
             "AND moderation_status = 'ACCEPTED' ORDER BY (SELECT COUNT(*) FROM post_comments " +
             "WHERE post_id = posts.id) DESC",
-            countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+            countQuery = "SELECT COUNT(*) FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED'",
+            nativeQuery = true)
     Page<Post> findPopularPosts(Pageable pageable);
 
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED' " +
            "ORDER BY (SELECT COUNT(*) FROM post_votes WHERE post_id = posts.id AND value = 1) DESC",
-           countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+           countQuery = "SELECT COUNT(*) FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED'",
+            nativeQuery = true)
     Page<Post> findBestPosts(Pageable pageable);
 
     @Query(value = "SELECT COUNT(*) FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED'",
@@ -52,18 +56,6 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
             "AND posts.is_active = 1 AND posts.moderation_status = 'ACCEPTED' AND post_votes.value = -1",
             nativeQuery = true)
     int findPostDislikesCount(@Param("postId") int postId);
-
-    @Query(value = "SELECT COUNT(*) AS 'count' FROM posts " +
-            "JOIN tag2post ON posts.id = tag2post.post_id JOIN tags ON tags.id = tag2post.tag_id " +
-            "WHERE tags.name = :tagName AND posts.is_active = 1 AND posts.moderation_status = 'ACCEPTED'",
-            nativeQuery = true)
-    int findPostCountByTag(@Param("tagName") String tagName);
-
-    @Query(value = "SELECT COUNT(*) AS 'count' FROM posts " +
-            "JOIN tag2post ON posts.id = tag2post.post_id JOIN tags ON tags.id = tag2post.tag_id " +
-            "WHERE posts.is_active = 1 AND posts.moderation_status = 'ACCEPTED' " +
-            "GROUP BY tags.name ORDER BY count DESC LIMIT 1", nativeQuery = true)
-    int findPostCountByPopularTag();
 
     @Query(value = "SELECT COUNT(*) FROM posts WHERE is_active = 1 AND moderation_status = 'NEW'",
             nativeQuery = true)
