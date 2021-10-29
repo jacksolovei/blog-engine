@@ -17,7 +17,7 @@ public class PostComment {
     private int id;
 
     @Column(name = "parent_id")
-    private int parentId;
+    private Integer parentId;
 
     @Column(nullable = false)
     private Date time;

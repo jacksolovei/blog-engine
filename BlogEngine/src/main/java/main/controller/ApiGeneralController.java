@@ -1,9 +1,12 @@
 package main.controller;
 
 import lombok.AllArgsConstructor;
+import main.api.response.CalendarResponse;
 import main.api.response.InitResponse;
 import main.api.response.SettingsResponse;
 import main.api.response.TagListResponse;
+import main.service.ApiPostService;
+import main.service.CalendarService;
 import main.service.SettingsService;
 import main.service.TagService;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +22,7 @@ public class ApiGeneralController {
     private final InitResponse initResponse;
     private final SettingsService settingsService;
     private final TagService tagService;
+    private final CalendarService calendarService;
 
     @GetMapping("/init")
     private InitResponse init() {
@@ -33,5 +37,10 @@ public class ApiGeneralController {
     @GetMapping("/tag")
     private ResponseEntity<TagListResponse> tags(@RequestParam(required = false) String query) {
         return ResponseEntity.ok(tagService.getTags(query));
+    }
+
+    @GetMapping("/calendar")
+    private ResponseEntity<CalendarResponse> getCalendar(@RequestParam(required = false) String year) {
+        return ResponseEntity.ok(calendarService.getPostsInCalendar(year));
     }
 }

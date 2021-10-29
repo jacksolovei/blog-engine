@@ -1,9 +1,11 @@
 package main.service;
 
 import lombok.AllArgsConstructor;
+import main.dto.CommentDto;
 import main.dto.PostDto;
 import main.dto.UserDto;
 import main.model.Post;
+import main.model.PostComment;
 import main.model.User;
 import main.repository.PostRepository;
 import org.springframework.stereotype.Service;
@@ -72,5 +74,23 @@ public class MapperService {
         user.setEmail(userDto.getEmail());
         user.setPhoto(userDto.getPhoto());
         return user;
+    }
+
+    public CommentDto convertCommentToDto(PostComment postComment) {
+        CommentDto commentDto = new CommentDto();
+        commentDto.setId(postComment.getId());
+        commentDto.setTimestamp(postComment.getTime().getTime() / 1000);
+        commentDto.setText(postComment.getText());
+        commentDto.setUser(convertUserToDto(postComment.getUser()));
+        return commentDto;
+    }
+
+    public PostComment convertDtoToComment(CommentDto commentDto) {
+        PostComment postComment = new PostComment();
+        postComment.setId(commentDto.getId());
+        postComment.setTime(new Date(commentDto.getTimestamp() * 1000));
+        postComment.setText(commentDto.getText());
+        postComment.setUser(convertDtoToUser(commentDto.getUser()));
+        return postComment;
     }
 }

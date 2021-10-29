@@ -12,14 +12,16 @@ import java.util.List;
 public interface TagRepository extends JpaRepository<Tag, Integer> {
 
     @Query(value = "SELECT tags.name, ROUND(((SELECT COUNT(*) FROM tag2post WHERE tags.id = tag2post.tag_id) " +
-            "/ (SELECT COUNT(*) FROM posts WHERE posts.is_active = 1 AND moderation_status = 'ACCEPTED')) " +
+            "/ (SELECT COUNT(*) FROM posts WHERE is_active = 1 " +
+            "AND moderation_status = 'ACCEPTED' AND time < NOW())) " +
             "* (1 / ((SELECT COUNT(*) AS 'count' FROM posts JOIN tag2post ON posts.id = tag2post.post_id " +
             "JOIN tags ON tags.id = tag2post.tag_id WHERE posts.is_active = 1 AND moderation_status = 'ACCEPTED' " +
-            "GROUP BY tags.name ORDER BY count DESC LIMIT 1) " +
-            "/ (SELECT COUNT(*) FROM posts WHERE posts.is_active = 1 AND moderation_status = 'ACCEPTED'))), 2) " +
-            "AS weight FROM tags JOIN tag2post ON tags.id = tag2post.tag_id " +
+            "AND time < NOW() GROUP BY tags.name ORDER BY count DESC LIMIT 1) " +
+            "/ (SELECT COUNT(*) FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED' " +
+            "AND time < NOW()))), 2) AS weight FROM tags JOIN tag2post ON tags.id = tag2post.tag_id " +
             "JOIN posts ON tag2post.post_id = posts.id " +
-            "WHERE posts.is_active = 1 AND moderation_status = 'ACCEPTED' GROUP BY tags.name",
+            "WHERE is_active = 1 AND moderation_status = 'ACCEPTED' " +
+            "AND time < NOW() GROUP BY tags.name",
             nativeQuery = true)
     List<TagResponseProjection> findAllTags();
 }
