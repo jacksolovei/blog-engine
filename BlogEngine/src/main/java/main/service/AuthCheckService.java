@@ -10,15 +10,15 @@ import main.repository.CaptchaRepository;
 import main.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
 public class AuthCheckService {
+    public static final int PASSWORD_LENGTH = 6;
+    public static final int MAX_LENGTH = 255;
+
     private final UserRepository userRepository;
     private final MapperService mapperService;
     private final CaptchaRepository captchaRepository;
@@ -46,20 +46,22 @@ public class AuthCheckService {
             errors.put("email", "Этот e-mail уже зарегистрирован");
         }
         String name = regRequest.getName();
-        if (name.length() > 255 || !name.matches("[А-Яа-яA-Za-z]+([А-Яа-яA-Za-z\\s]+)?")) {
+        if (name.length() > MAX_LENGTH || !name.matches("[А-Яа-яA-Za-z]+([А-Яа-яA-Za-z\\s]+)?")) {
             errors.put("name", "Имя указано неверно");
         }
         String password = regRequest.getPassword();
-        if (password.length() < 6) {
+        if (password.length() < PASSWORD_LENGTH) {
             errors.put("password", "Пароль короче 6-ти символов");
         }
         String captcha = regRequest.getCaptcha();
         String secret = regRequest.getCaptchaSecret();
-        List<CaptchaCode> codes = captchaRepository.findAll().stream()
-                .filter(c -> c.getSecretCode().equals(secret))
-                .collect(Collectors.toList());
-        if (!codes.get(0).getCode().equals(captcha)) {
-            errors.put("captcha", "Код с картинки введён неверно");
+        Optional<CaptchaCode> optionalCaptcha = captchaRepository.findCaptchaBySecretCode(secret);
+        if (optionalCaptcha.isPresent()) {
+            if (!optionalCaptcha.get().getCode().equals(captcha)) {
+                errors.put("captcha", "Код с картинки введён неверно");
+            }
+        } else {
+            errors.put("captcha", "код устарел");
         }
         if (errors.isEmpty()) {
             regResponse.setResult(true);
@@ -76,6 +78,4 @@ public class AuthCheckService {
         }
         return regResponse;
     }
-
-
 }

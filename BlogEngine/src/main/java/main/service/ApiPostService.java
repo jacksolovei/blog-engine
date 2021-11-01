@@ -21,9 +21,11 @@ import java.util.stream.Collectors;
 @Service
 @AllArgsConstructor
 public class ApiPostService {
+    public static final String RECENT_MODE = "recent";
+
     private final PostRepository postRepository;
     private final MapperService mapperService;
-    private AuthCheckService authCheckService;
+    private final AuthCheckService authCheckService;
 
     public ApiPostListResponse getPosts(int offset, int limit, String mode) {
         ApiPostListResponse apiList = new ApiPostListResponse();
@@ -53,7 +55,7 @@ public class ApiPostService {
 
     public ApiPostListResponse getPostsByQuery(int offset, int limit, String query) {
         if (query == null || query.matches("\\s+")) {
-            return getPosts(offset, limit, "recent");
+            return getPosts(offset, limit, RECENT_MODE);
         }
         ApiPostListResponse apiList = new ApiPostListResponse();
         Pageable pageable = PageRequest.of(offset / limit, limit);

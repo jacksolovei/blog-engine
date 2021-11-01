@@ -17,7 +17,7 @@ import java.util.UUID;
 @Service
 @AllArgsConstructor
 public class CaptchaService {
-
+    public static final long HOUR_IN_MILLISECONDS = 3_600_000;
     private final CaptchaRepository captchaRepository;
 
     public CaptchaResponse getCaptchaCode() {
@@ -36,11 +36,8 @@ public class CaptchaService {
         return captchaResponse;
     }
 
-    @Scheduled(fixedRate = 3_600_000)
+    @Scheduled(fixedRate = HOUR_IN_MILLISECONDS)
     public void deleteCaptchaCode() {
-        List<CaptchaCode> codes = captchaRepository.findOldCaptcha();
-        if (codes.size() > 0) {
-            codes.forEach(captchaRepository::delete);
-        }
+        captchaRepository.deleteAll(captchaRepository.findOldCaptcha());
     }
 }
