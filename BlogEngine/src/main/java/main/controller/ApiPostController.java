@@ -7,8 +7,10 @@ import main.model.Post;
 import main.service.ApiPostService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.Optional;
 
 @RestController
@@ -18,7 +20,7 @@ public class ApiPostController {
     private final ApiPostService apiPostService;
 
     @GetMapping("/post")
-    private ResponseEntity<ApiPostListResponse> posts(
+    public ResponseEntity<ApiPostListResponse> posts(
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(defaultValue = "recent") String mode) {
@@ -26,7 +28,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/post/search")
-    private ResponseEntity<ApiPostListResponse> search(
+    public ResponseEntity<ApiPostListResponse> search(
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(required = false) String query) {
@@ -42,7 +44,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/post/byTag")
-    private ResponseEntity<ApiPostListResponse> byTag(
+    public ResponseEntity<ApiPostListResponse> byTag(
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam String tag) {
@@ -50,11 +52,20 @@ public class ApiPostController {
     }
 
     @GetMapping("post/{id}")
-    private ResponseEntity<PostByIdResponse> getById(@PathVariable int id) {
+    public ResponseEntity<PostByIdResponse> getById(@PathVariable int id, Principal principal) {
         Optional<Post> optionalPost = apiPostService.getPostById(id);
         if (optionalPost.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
-        return ResponseEntity.ok(apiPostService.getPostResponseById(optionalPost.get()));
+        return ResponseEntity.ok(apiPostService.getPostResponseById(optionalPost.get(), principal));
+    }
+
+    @PreAuthorize("hasAuthority('user:write')")
+    @GetMapping("post/my")
+    public ResponseEntity<ApiPostListResponse> getPostByAuthUser(
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "published") String status, Principal principal) {
+        return ResponseEntity.ok(apiPostService.getPostsByStatus(offset, limit, status, principal));
     }
 }

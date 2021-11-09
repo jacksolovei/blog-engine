@@ -1,15 +1,26 @@
 package main.service;
 
 import lombok.AllArgsConstructor;
+import main.api.request.LoginRequest;
 import main.api.request.RegRequest;
 import main.api.response.AuthCheckResponse;
+import main.api.response.LogoutResponse;
 import main.api.response.RegResponse;
+import main.dto.UserDto;
 import main.model.CaptchaCode;
 import main.model.User;
 import main.repository.CaptchaRepository;
 import main.repository.UserRepository;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -22,23 +33,48 @@ public class AuthCheckService {
     private final UserRepository userRepository;
     private final MapperService mapperService;
     private final CaptchaRepository captchaRepository;
+    private final AuthenticationManager authenticationManager;
 
-    public AuthCheckResponse getAuthCheck() {
-        AuthCheckResponse authCheckResponse = new AuthCheckResponse();
-        authCheckResponse.setResult(false);
-
-        if (authCheckResponse.isResult()) {
-            if (userRepository.findById(1).isPresent()) {
-                User user = userRepository.findById(1).get();
-                authCheckResponse.setUser(mapperService.convertUserToDto(user));
-            }
+    public AuthCheckResponse getAuthCheck(Principal principal) {
+        if (principal == null) {
+            AuthCheckResponse authCheck = new AuthCheckResponse();
+            authCheck.setResult(false);
+            return authCheck;
         }
-        return authCheckResponse;
+        return getResponse(principal.getName());
+    }
+
+    public AuthCheckResponse login(LoginRequest loginRequest) {
+        Authentication auth = authenticationManager
+                .authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                loginRequest.getEmail(), loginRequest.getPassword()));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        org.springframework.security.core.userdetails.User user =
+                (org.springframework.security.core.userdetails.User) auth.getPrincipal();
+        return  getResponse(user.getUsername());
+    }
+
+    private AuthCheckResponse getResponse(String email) {
+        main.model.User currentUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User " + email + " not found"));
+        UserDto userDto = mapperService.convertUserToDto(currentUser);
+        AuthCheckResponse authCheck = new AuthCheckResponse();
+        authCheck.setResult(true);
+        authCheck.setUser(userDto);
+        return authCheck;
+    }
+
+    public LogoutResponse getLogoutResponse() {
+        LogoutResponse logoutResponse = new LogoutResponse();
+        logoutResponse.setResult(true);
+        return logoutResponse;
     }
 
     public RegResponse getRegResponse(RegRequest regRequest) {
         RegResponse regResponse = new RegResponse();
         Map<String, String> errors = new HashMap<>();
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
         List<String> emails = userRepository.findAll().stream()
                 .map(User::getEmail).collect(Collectors.toList());
         String email = regRequest.getEmail();
@@ -70,7 +106,7 @@ public class AuthCheckService {
             user.setRegTime(new Date());
             user.setName(name);
             user.setEmail(email);
-            user.setPassword(password);
+            user.setPassword(passwordEncoder.encode(password));
             userRepository.save(user);
         } else {
             regResponse.setResult(false);

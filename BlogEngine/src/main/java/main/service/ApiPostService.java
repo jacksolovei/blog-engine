@@ -9,12 +9,14 @@ import main.dto.PostDto;
 import main.dto.UserDto;
 import main.model.Post;
 import main.model.Tag;
+import main.model.User;
 import main.repository.PostRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -90,8 +92,8 @@ public class ApiPostService {
         return postRepository.findActivePostById(id);
     }
 
-    public PostByIdResponse getPostResponseById(Post post) {
-        AuthCheckResponse authCheckResponse = authCheckService.getAuthCheck();
+    public PostByIdResponse getPostResponseById(Post post, Principal principal) {
+        AuthCheckResponse authCheckResponse = authCheckService.getAuthCheck(principal);
         if (authCheckResponse.isResult()) {
             UserDto user = authCheckResponse.getUser();
             if (!user.isModeration() || user.getId() != post.getUser().getId()) {
@@ -117,5 +119,32 @@ public class ApiPostService {
         int view = post.getViewCount();
         post.setViewCount(view + 1);
         postRepository.save(post);
+    }
+
+    public ApiPostListResponse getPostsByStatus(int offset, int limit, String status, Principal principal) {
+        String email = principal.getName();
+        ApiPostListResponse apiPostListResponse = new ApiPostListResponse();
+        List<Post> posts = new ArrayList<>();
+        Pageable pageable = PageRequest.of(offset / limit, limit);
+        Page<Post> page;
+        switch (status) {
+            case "inactive":
+                page = postRepository.findInactivePosts(pageable, email);
+                break;
+            case "pending":
+                page = postRepository.findPendingPosts(pageable, email);
+                break;
+            case "declined":
+                page = postRepository.findDeclinedPosts(pageable, email);
+                break;
+            default :
+                page = postRepository.findPublishedPosts(pageable, email);
+        }
+        posts.addAll(page.getContent());
+        apiPostListResponse.setCount(page.getTotalElements());
+        List<PostDto> postDtoList = posts.stream().map(mapperService::convertPostToDto)
+                .collect(Collectors.toList());
+        apiPostListResponse.setPosts(postDtoList);
+        return apiPostListResponse;
     }
 }

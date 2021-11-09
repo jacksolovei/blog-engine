@@ -11,13 +11,13 @@ import org.springframework.stereotype.Service;
 
 import java.util.Base64;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 @Service
 @AllArgsConstructor
 public class CaptchaService {
     public static final long HOUR_IN_MILLISECONDS = 3_600_000;
+    
     private final CaptchaRepository captchaRepository;
 
     public CaptchaResponse getCaptchaCode() {
