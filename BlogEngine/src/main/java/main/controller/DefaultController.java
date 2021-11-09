@@ -12,7 +12,7 @@ public class DefaultController {
     private final InitResponse initResponse;
 
     @RequestMapping("/")
-    public String index(Model model) {
+    public String index() {
         return "index";
     }
 }

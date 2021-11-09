@@ -112,4 +112,35 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 " +
             "AND moderation_status = 'ACCEPTED' AND time < NOW() AND id = :id", nativeQuery = true)
     Optional<Post> findActivePostById(@Param("id") int id);
+
+    @Query(value = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
+            "WHERE posts.is_active = 0 AND users.email = :email",
+            nativeQuery = true,
+            countQuery = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
+                    "WHERE posts.is_active = 0 AND users.email = :email")
+    Page<Post> findInactivePosts(Pageable pageable, @Param("email") String email);
+
+    @Query(value = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
+            "WHERE posts.is_active = 1 AND moderation_status = 'NEW' " +
+            "AND users.email = :email", nativeQuery = true,
+            countQuery = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
+                    "WHERE posts.is_active = 1 AND moderation_status = 'NEW' " +
+                    "AND users.email = :email")
+    Page<Post> findPendingPosts(Pageable pageable, @Param("email") String email);
+
+    @Query(value = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
+            "WHERE posts.is_active = 1 AND moderation_status = 'DECLINED' " +
+            "AND users.email = :email", nativeQuery = true,
+            countQuery = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
+                    "WHERE posts.is_active = 1 AND moderation_status = 'DECLINED' " +
+                    "AND users.email = :email")
+    Page<Post> findDeclinedPosts(Pageable pageable, @Param("email") String email);
+
+    @Query(value = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
+            "WHERE posts.is_active = 1 AND moderation_status = 'ACCEPTED' " +
+            "AND users.email = :email", nativeQuery = true,
+            countQuery = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
+                    "WHERE posts.is_active = 1 AND moderation_status = 'ACCEPTED' " +
+                    "AND users.email = :email")
+    Page<Post> findPublishedPosts(Pageable pageable, @Param("email") String email);
 }
