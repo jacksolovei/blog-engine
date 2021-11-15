@@ -1,19 +1,16 @@
 package main.controller;
 
 import lombok.AllArgsConstructor;
-import main.api.response.CalendarResponse;
-import main.api.response.InitResponse;
-import main.api.response.SettingsResponse;
-import main.api.response.TagListResponse;
-import main.service.ApiPostService;
-import main.service.CalendarService;
-import main.service.SettingsService;
-import main.service.TagService;
+import main.api.request.CommentRequest;
+import main.api.response.*;
+import main.service.*;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/api")
@@ -23,6 +20,8 @@ public class ApiGeneralController {
     private final SettingsService settingsService;
     private final TagService tagService;
     private final CalendarService calendarService;
+    private final ImageService imageService;
+    private final CommentService commentService;
 
     @GetMapping("/init")
     public InitResponse init() {
@@ -42,5 +41,25 @@ public class ApiGeneralController {
     @GetMapping("/calendar")
     public ResponseEntity<CalendarResponse> getCalendar(@RequestParam(required = false) String year) {
         return ResponseEntity.ok(calendarService.getPostsInCalendar(year));
+    }
+
+    @PreAuthorize("hasAuthority('user:write')")
+    @PostMapping(value = "/image", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<?> image(@RequestParam MultipartFile image) {
+        if (!imageService.checkImage(image)) {
+            return ResponseEntity.badRequest().body(imageService.getErrorResponse(image));
+        }
+        return ResponseEntity.ok(imageService.uploadImage(image));
+    }
+
+    @PreAuthorize("hasAuthority('user:write')")
+    @PostMapping("/comment")
+    public ResponseEntity<?> postComment(@RequestBody CommentRequest commentRequest,
+                                         Principal principal) {
+        if (!commentService.checkComment(commentRequest)) {
+            return ResponseEntity.badRequest()
+                    .body(commentService.getErrorResponse(commentRequest));
+        }
+        return ResponseEntity.ok(commentService.saveComment(commentRequest, principal));
     }
 }

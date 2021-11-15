@@ -25,7 +25,9 @@ public class MapperService {
         postDto.setUser(convertUserToDto(post.getUser()));
         postDto.setTitle(post.getTitle());
         postDto.setText(post.getText());
-        String postDtoText = postDto.getText();
+        String postDtoText = postDto.getText()
+                .replaceAll("<(/)?([0-9A-Za-z\\-;:./=\"\\s]+)?>", "")
+                .replaceAll("&nbsp;", "");
         postDto.setAnnounce(postDtoText.length() < 150 ? postDtoText : postDtoText.substring(0, 150) + "...");
         postDto.setLikeCount(postRepository.findPostLikesCount(post.getId()));
         postDto.setDislikeCount(postRepository.findPostDislikesCount(post.getId()));

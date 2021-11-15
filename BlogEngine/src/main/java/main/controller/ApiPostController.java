@@ -1,8 +1,11 @@
 package main.controller;
 
 import lombok.AllArgsConstructor;
+import main.api.request.PostRequest;
 import main.api.response.ApiPostListResponse;
 import main.api.response.PostByIdResponse;
+import main.api.response.PostForModerationListResponse;
+import main.api.response.RegResponse;
 import main.model.Post;
 import main.service.ApiPostService;
 import org.springframework.http.HttpStatus;
@@ -67,5 +70,34 @@ public class ApiPostController {
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(defaultValue = "published") String status, Principal principal) {
         return ResponseEntity.ok(apiPostService.getPostsByStatus(offset, limit, status, principal));
+    }
+
+    @PreAuthorize("hasAuthority('user:moderate')")
+    @GetMapping("post/moderation")
+    public ResponseEntity<PostForModerationListResponse> getPostsForModeration(
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "new") String status,
+            Principal principal) {
+        return ResponseEntity.ok(apiPostService.getPostsForModeration(offset, limit, status, principal));
+    }
+
+    @PreAuthorize("hasAuthority('user:write')")
+    @PostMapping("/post")
+    public ResponseEntity<RegResponse> savePost(@RequestBody PostRequest postRequest,
+                                                Principal principal) {
+        return ResponseEntity.ok(apiPostService.savePost(postRequest, principal));
+    }
+
+    @PreAuthorize("hasAuthority('user:write')")
+    @PutMapping("/post/{id}")
+    public ResponseEntity<RegResponse> editPost(@PathVariable int id,
+                                                @RequestBody PostRequest postRequest,
+                                                Principal principal) {
+        Optional<Post> optionalPost = apiPostService.getPostById(id);
+        if (optionalPost.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+        return ResponseEntity.ok(apiPostService.editPost(optionalPost.get(), postRequest, principal));
     }
 }
