@@ -23,6 +23,11 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     Page<Post> findRecentPosts(Pageable pageable);
 
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED' " +
+            "AND time < NOW()",
+            nativeQuery = true)
+    List<Post> findActivePosts();
+
+    @Query(value = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED' " +
             "AND time < NOW() ORDER BY time ASC",
             countQuery = "SELECT COUNT(*) FROM posts WHERE is_active = 1 " +
                     "AND moderation_status = 'ACCEPTED' AND time < NOW()",
@@ -38,9 +43,10 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     Page<Post> findPopularPosts(Pageable pageable);
 
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED' " +
-           "AND posts.time < NOW() ORDER BY (SELECT COUNT(*) FROM post_votes WHERE post_id = posts.id AND value = 1) DESC",
-           countQuery = "SELECT COUNT(*) FROM posts WHERE is_active = 1 " +
-                   "AND moderation_status = 'ACCEPTED' AND posts.time < NOW()",
+            "AND posts.time < NOW() ORDER BY (SELECT COUNT(*) FROM post_votes " +
+            "WHERE post_id = posts.id AND value = 1) DESC",
+            countQuery = "SELECT COUNT(*) FROM posts WHERE is_active = 1 " +
+                    "AND moderation_status = 'ACCEPTED' AND posts.time < NOW()",
             nativeQuery = true)
     Page<Post> findBestPosts(Pageable pageable);
 
@@ -143,4 +149,30 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
                     "WHERE posts.is_active = 1 AND moderation_status = 'ACCEPTED' " +
                     "AND users.email = :email")
     Page<Post> findPublishedPosts(Pageable pageable, @Param("email") String email);
+
+    @Query(value = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'NEW'",
+            nativeQuery = true,
+            countQuery = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'NEW'")
+    Page<Post> findNewPosts(Pageable pageable);
+
+    @Query(value = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
+            "WHERE posts.is_active = 1 AND moderation_status = 'ACCEPTED' " +
+            "AND users.email = :email", nativeQuery = true)
+    List<Post> findUserActivePosts(@Param("email") String email);
+
+    @Query(value = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED' " +
+            "AND moderator_id = :moderator_id", nativeQuery = true,
+            countQuery = "SELECT * FROM posts WHERE is_active = 1 " +
+                    "AND moderation_status = 'ACCEPTED' " +
+                    "AND moderator_id = :moderator_id")
+    Page<Post> findAcceptedPostsByModerator(Pageable pageable,
+                                            @Param("moderator_id") int moderatorId);
+
+    @Query(value = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'DECLINED' " +
+            "AND moderator_id = :moderator_id", nativeQuery = true,
+            countQuery = "SELECT * FROM posts WHERE is_active = 1 " +
+                    "AND moderation_status = 'DECLINED' " +
+                    "AND moderator_id = :moderator_id")
+    Page<Post> findDeclinedPostsByModerator(Pageable pageable,
+                                            @Param("moderator_id") int moderatorId);
 }
