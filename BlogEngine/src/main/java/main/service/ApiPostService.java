@@ -1,16 +1,17 @@
 package main.service;
 
 import lombok.AllArgsConstructor;
+import main.api.request.ModerationRequest;
+import main.api.request.PostIdRequest;
 import main.api.request.PostRequest;
 import main.api.response.*;
 import main.dto.CommentDto;
 import main.dto.PostDto;
 import main.dto.UserDto;
-import main.model.ModerationStatus;
-import main.model.Post;
-import main.model.Tag;
-import main.model.User;
+import main.model.*;
 import main.repository.PostRepository;
+import main.repository.PostVoteRepository;
+import main.repository.SettingsRepository;
 import main.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,9 +30,11 @@ public class ApiPostService {
     public static final int MIN_TEXT_LENGTH = 50;
 
     private final PostRepository postRepository;
+    private final UserRepository userRepository;
+    private final SettingsRepository settingsRepository;
+    private final PostVoteRepository postVoteRepository;
     private final MapperService mapperService;
     private final AuthCheckService authCheckService;
-    private final UserRepository userRepository;
 
     public ApiPostListResponse getPosts(int offset, int limit, String mode) {
         ApiPostListResponse apiList = new ApiPostListResponse();
@@ -92,19 +95,29 @@ public class ApiPostService {
         return apiList;
     }
 
-    public Optional<Post> getPostById(int id) {
+    public Optional<Post> getOptionalPostById(int id, Principal principal) {
+        if (principal != null) {
+            return postRepository.findById(id);
+        }
         return postRepository.findActivePostById(id);
     }
 
     public PostByIdResponse getPostResponseById(Post post, Principal principal) {
         AuthCheckResponse authCheckResponse = authCheckService.getAuthCheck(principal);
+        int view;
         if (authCheckResponse.isResult()) {
             UserDto user = authCheckResponse.getUser();
-            if (!user.isModeration() || user.getId() != post.getUser().getId()) {
-                updateViewCount(post);
+            if (user.isModeration() || user.getId() == post.getUser().getId()) {
+                view = post.getViewCount();
+            } else {
+                view = post.getViewCount() + 1;
+                post.setViewCount(view);
+                postRepository.save(post);
             }
         } else {
-            updateViewCount(post);
+            view = post.getViewCount() + 1;
+            post.setViewCount(view);
+            postRepository.save(post);
         }
         List<CommentDto> comments = post.getPostComments().stream()
                 .map(mapperService::convertCommentToDto)
@@ -114,18 +127,13 @@ public class ApiPostService {
         PostDto postDto = mapperService.convertPostToDto(post);
 
         return new PostByIdResponse(postDto.getId(), postDto.getTimestamp(),
-                true, postDto.getUser(), postDto.getTitle(), postDto.getText(),
-                postDto.getLikeCount(), postDto.getDislikeCount(), postDto.getViewCount(),
+                postDto.isActive(), postDto.getUser(), postDto.getTitle(), postDto.getText(),
+                postDto.getLikeCount(), postDto.getDislikeCount(), view,
                 comments, tags);
     }
 
-    private void updateViewCount(Post post) {
-        int view = post.getViewCount();
-        post.setViewCount(view + 1);
-        postRepository.save(post);
-    }
-
-    public ApiPostListResponse getPostsByStatus(int offset, int limit, String status, Principal principal) {
+    public ApiPostListResponse getPostsByStatus(
+            int offset, int limit, String status, Principal principal) {
         String email = principal.getName();
         ApiPostListResponse apiPostListResponse = new ApiPostListResponse();
         List<Post> posts = new ArrayList<>();
@@ -207,7 +215,13 @@ public class ApiPostService {
             regResponse.setResult(true);
             Post post = new Post();
             post.setIsActive(postRequest.isActive() ? (byte) 1 : 0);
-            post.setStatus(ModerationStatus.NEW);
+            boolean isModeration = settingsRepository
+                    .findSettingValue("POST_PREMODERATION").equals("YES");
+            if (!isModeration && post.getIsActive() == 1) {
+                post.setStatus(ModerationStatus.ACCEPTED);
+            } else {
+                post.setStatus(ModerationStatus.NEW);
+            }
             post.setTime(postDate.compareTo(new Date()) <= 0 ? new Date() : postDate);
             post.setTitle(postRequest.getTitle());
             post.setText(postRequest.getText());
@@ -229,7 +243,9 @@ public class ApiPostService {
         if (errors.isEmpty()) {
             regResponse.setResult(true);
             post.setIsActive(postRequest.isActive() ? (byte) 1 : 0);
-            if (user.getIsModerator() == 0) {
+            boolean isModeration = settingsRepository
+                    .findSettingValue("POST_PREMODERATION").equals("YES");
+            if (user.getIsModerator() == 0 && isModeration) {
                 post.setStatus(ModerationStatus.NEW);
             }
             post.setTime(postDate.compareTo(new Date()) <= 0 ? new Date() : postDate);
@@ -241,5 +257,74 @@ public class ApiPostService {
             regResponse.setErrors(errors);
         }
         return regResponse;
+    }
+
+    public ResultResponse moderate(ModerationRequest moderationRequest,
+                                   Principal principal) {
+        ResultResponse resultResponse = new ResultResponse();
+        User user = getAuthorizedUser(principal);
+        int id = moderationRequest.getPostId();
+        if (user.getIsModerator() == 1 && postRepository.findById(id).isPresent()) {
+            Post post = postRepository.findById(id).get();
+            String status = moderationRequest.getDecision();
+            switch (status) {
+                case "accept":
+                    post.setStatus(ModerationStatus.ACCEPTED);
+                    post.setModeratorId(user.getId());
+                    postRepository.save(post);
+                    resultResponse.setResult(true);
+                    break;
+                case "decline":
+                    post.setStatus(ModerationStatus.DECLINED);
+                    post.setModeratorId(user.getId());
+                    postRepository.save(post);
+                    resultResponse.setResult(true);
+                    break;
+                default:
+                    resultResponse.setResult(false);
+            }
+        } else {
+            resultResponse.setResult(false);
+        }
+        return resultResponse;
+    }
+
+    public ResultResponse getVoteResponse(
+            PostIdRequest postIdRequest, Principal principal, byte voteValue) {
+        ResultResponse result = new ResultResponse();
+        int postId = postIdRequest.getPostId();
+        Post post = postRepository.findActivePostById(postId)
+                .orElseThrow(() -> new NoSuchElementException("Post " + postId + " not found"));
+        User user = getAuthorizedUser(principal);
+        Optional<PostVote> optionalVote = postVoteRepository.findAll().stream()
+                .filter(v -> v.getPost().equals(post) && v.getUser().equals(user))
+                .findFirst();
+        if (optionalVote.isPresent()) {
+            if (optionalVote.get().getValue() != voteValue) {
+                PostVote vote = optionalVote.get();
+                vote.setValue(voteValue);
+                postVoteRepository.save(vote);
+                result.setResult(true);
+            } else {
+                result.setResult(false);
+            }
+        } else {
+            PostVote postVote = new PostVote();
+            postVote.setPost(post);
+            postVote.setUser(user);
+            postVote.setTime(new Date());
+            postVote.setValue(voteValue);
+            postVoteRepository.save(postVote);
+            result.setResult(true);
+        }
+        return result;
+    }
+
+    public ResultResponse likePost(PostIdRequest postIdRequest, Principal principal) {
+        return getVoteResponse(postIdRequest, principal, (byte) 1);
+    }
+
+    public ResultResponse dislikePost(PostIdRequest postIdRequest, Principal principal) {
+        return getVoteResponse(postIdRequest, principal, (byte) -1);
     }
 }

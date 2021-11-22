@@ -3,9 +3,12 @@ package main.service;
 import main.api.response.RegResponse;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.imgscalr.Scalr;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,12 +18,14 @@ import java.util.Map;
 
 @Service
 public class ImageService {
-    public static final long IMAGE_MAX_SIZE = 10 * 1024 * 1024;
+    public static final long IMAGE_MAX_SIZE = 1024 * 1024;
+    public static final int NEW_WIDTH = 500;
 
     public Map<String, String> getErrors(MultipartFile image) {
         Map<String, String> errors = new HashMap<>();
         if (image.getSize() > IMAGE_MAX_SIZE) {
-            errors.put("image", "Размер файла превышает допустимый размер");
+            errors.put("image",
+                    "Размер файла превышает допустимый размер");
         }
         String extension = FilenameUtils.getExtension(image.getOriginalFilename());
         if (!extension.equals("jpg") && !extension.equals("png")) {
@@ -41,7 +46,7 @@ public class ImageService {
         return regResponse;
     }
 
-    public String uploadImage(MultipartFile image) {
+    public String uploadImage(MultipartFile image) throws IOException {
         String random = RandomStringUtils.randomAlphabetic(6);
         StringBuilder pathToImage = new StringBuilder();
         pathToImage
@@ -54,13 +59,16 @@ public class ImageService {
                 .append("/")
                 .append(image.getOriginalFilename());
         Path path = Paths.get(pathToImage.toString());
-        try {
-            Files.createDirectories(path.getParent());
-            Files.createFile(path);
-            Files.write(path, image.getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Files.createDirectories(path.getParent());
+        Files.createFile(path);
+        BufferedImage bufferedImage = ImageIO.read(image.getInputStream());
+        int height = bufferedImage.getHeight();
+        int width = bufferedImage.getWidth();
+        int newHeight = (int) Math.round(height / (double) (width / NEW_WIDTH));
+        BufferedImage resultImage = Scalr.resize(
+                bufferedImage, Scalr.Method.QUALITY, NEW_WIDTH, newHeight);
+        String extension = FilenameUtils.getExtension(image.getOriginalFilename());
+        ImageIO.write(resultImage, extension, path.toFile());
         String load = pathToImage.toString();
         return load.substring(load.lastIndexOf("/upload"));
     }

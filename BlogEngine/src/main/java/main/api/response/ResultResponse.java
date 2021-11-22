@@ -5,6 +5,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class LogoutResponse {
+public class ResultResponse {
     private boolean result;
 }

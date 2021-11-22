@@ -1,11 +1,9 @@
 package main.controller;
 
 import lombok.AllArgsConstructor;
+import main.api.request.PostIdRequest;
 import main.api.request.PostRequest;
-import main.api.response.ApiPostListResponse;
-import main.api.response.PostByIdResponse;
-import main.api.response.PostForModerationListResponse;
-import main.api.response.RegResponse;
+import main.api.response.*;
 import main.model.Post;
 import main.service.ApiPostService;
 import org.springframework.http.HttpStatus;
@@ -14,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @RestController
@@ -56,7 +55,7 @@ public class ApiPostController {
 
     @GetMapping("post/{id}")
     public ResponseEntity<PostByIdResponse> getById(@PathVariable int id, Principal principal) {
-        Optional<Post> optionalPost = apiPostService.getPostById(id);
+        Optional<Post> optionalPost = apiPostService.getOptionalPostById(id, principal);
         if (optionalPost.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
@@ -79,7 +78,8 @@ public class ApiPostController {
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(defaultValue = "new") String status,
             Principal principal) {
-        return ResponseEntity.ok(apiPostService.getPostsForModeration(offset, limit, status, principal));
+        return ResponseEntity
+                .ok(apiPostService.getPostsForModeration(offset, limit, status, principal));
     }
 
     @PreAuthorize("hasAuthority('user:write')")
@@ -94,10 +94,30 @@ public class ApiPostController {
     public ResponseEntity<RegResponse> editPost(@PathVariable int id,
                                                 @RequestBody PostRequest postRequest,
                                                 Principal principal) {
-        Optional<Post> optionalPost = apiPostService.getPostById(id);
+        Optional<Post> optionalPost = apiPostService.getOptionalPostById(id, principal);
         if (optionalPost.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
-        return ResponseEntity.ok(apiPostService.editPost(optionalPost.get(), postRequest, principal));
+        return ResponseEntity
+                .ok(apiPostService.editPost(optionalPost.get(), postRequest, principal));
+    }
+
+    @PreAuthorize("hasAuthority('user:write')")
+    @PostMapping("/post/like")
+    public ResponseEntity<ResultResponse> likePost(@RequestBody PostIdRequest postIdRequest,
+                                                   Principal principal) {
+        return ResponseEntity.ok(apiPostService.likePost(postIdRequest, principal));
+    }
+
+    @PreAuthorize("hasAuthority('user:write')")
+    @PostMapping("/post/dislike")
+    public ResponseEntity<ResultResponse> dislikePost(@RequestBody PostIdRequest postIdRequest,
+                                                   Principal principal) {
+        return ResponseEntity.ok(apiPostService.dislikePost(postIdRequest, principal));
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<String> handleNoSuchElementException(NoSuchElementException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 }

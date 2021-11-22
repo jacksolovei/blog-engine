@@ -59,8 +59,9 @@ public class CommentService {
     public CommentResponse saveComment(CommentRequest commentRequest, Principal principal) {
         CommentResponse commentResponse = new CommentResponse();
         User user = apiPostService.getAuthorizedUser(principal);
-        Post post = postRepository.findById(commentRequest.getPostId())
-                .orElseThrow(() -> new NoSuchElementException("Post not found"));
+        int postId = commentRequest.getPostId();
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new NoSuchElementException("Post " + postId + " not found"));
         PostComment comment = new PostComment();
         if (commentRequest.getParentId() != null) {
             int parentId = Integer.parseInt(commentRequest.getParentId());
