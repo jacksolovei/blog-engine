@@ -4,6 +4,7 @@ import main.api.response.RegResponse;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.imgscalr.Scalr;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,6 +21,9 @@ import java.util.Map;
 public class ImageService {
     public static final long IMAGE_MAX_SIZE = 1024 * 1024;
     public static final int NEW_WIDTH = 500;
+
+    @Value("${upload.path}")
+    private String uploadPath;
 
     public Map<String, String> getErrors(MultipartFile image) {
         Map<String, String> errors = new HashMap<>();
@@ -50,7 +54,8 @@ public class ImageService {
         String random = RandomStringUtils.randomAlphabetic(6);
         StringBuilder pathToImage = new StringBuilder();
         pathToImage
-                .append("src/main/resources/static/upload/")
+                .append(uploadPath)
+                .append("/")
                 .append(random, 0, 2)
                 .append("/")
                 .append(random, 2, 4)
