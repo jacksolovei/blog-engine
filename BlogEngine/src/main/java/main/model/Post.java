@@ -21,7 +21,9 @@ public class Post {
     private byte isActive;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "moderation_status", columnDefinition = "enum('NEW', 'ACCEPTED', 'DECLINED') default 'NEW'", nullable = false)
+    @Column(name = "moderation_status",
+            columnDefinition = "enum('NEW', 'ACCEPTED', 'DECLINED') default 'NEW'",
+            nullable = false)
     private ModerationStatus status;
 
     @Column(name = "moderator_id")

@@ -6,7 +6,6 @@ import main.api.response.CalendarResponse;
 import main.repository.PostRepository;
 import org.springframework.stereotype.Service;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
@@ -16,9 +15,6 @@ public class CalendarService {
     private final PostRepository postRepository;
 
     public CalendarResponse getPostsInCalendar(String year) {
-        SimpleDateFormat formatYear = new SimpleDateFormat("yyyy");
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-
         CalendarResponse calendarResponse = new CalendarResponse();
         List<CalendarPostProjection> responses = postRepository.findPostsInCalendar();
         Set<String> years = new TreeSet<>();
@@ -28,9 +24,10 @@ public class CalendarService {
         }
 
         for (CalendarPostProjection projection : responses) {
-            years.add(formatYear.format(projection.getTime()));
-            if (projection.getTime().toString().startsWith(year)) {
-                map.put(df.format(projection.getTime()), projection.getCount());
+            String date = projection.getDate();
+            years.add(date.substring(0, 4));
+            if (date.startsWith(year)) {
+                map.put(date, projection.getCount());
             }
         }
         calendarResponse.setYears(years);

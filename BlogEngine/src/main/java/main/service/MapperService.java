@@ -36,17 +36,6 @@ public class MapperService {
         return postDto;
     }
 
-    public Post convertDtoToPost(PostDto postDto) {
-        Post post = new Post();
-        post.setId(postDto.getId());
-        post.setIsActive(postDto.isActive() ? (byte) 1 : 0);
-        post.setTime(new Date(postDto.getTimestamp() * 1000));
-        post.setUser(convertDtoToUser(postDto.getUser()));
-        post.setTitle(postDto.getTitle());
-        post.setText(postDto.getText());
-        return post;
-    }
-
     public UserDto convertUserToDto(User user) {
         UserDto userDto = new UserDto();
         userDto.setId(user.getId());
@@ -66,18 +55,6 @@ public class MapperService {
         return userDto;
     }
 
-    public User convertDtoToUser(UserDto userDto) {
-        User user = new User();
-        user.setId(userDto.getId());
-        user.setName(userDto.getName());
-        user.setRegTime(userDto.getRegTime());
-        user.setPassword(userDto.getPassword());
-        user.setIsModerator(userDto.isModeration() ? (byte) 1 : 0);
-        user.setEmail(userDto.getEmail());
-        user.setPhoto(userDto.getPhoto());
-        return user;
-    }
-
     public CommentDto convertCommentToDto(PostComment postComment) {
         CommentDto commentDto = new CommentDto();
         commentDto.setId(postComment.getId());
@@ -85,14 +62,5 @@ public class MapperService {
         commentDto.setText(postComment.getText());
         commentDto.setUser(convertUserToDto(postComment.getUser()));
         return commentDto;
-    }
-
-    public PostComment convertDtoToComment(CommentDto commentDto) {
-        PostComment postComment = new PostComment();
-        postComment.setId(commentDto.getId());
-        postComment.setTime(new Date(commentDto.getTimestamp() * 1000));
-        postComment.setText(commentDto.getText());
-        postComment.setUser(convertDtoToUser(commentDto.getUser()));
-        return postComment;
     }
 }

@@ -69,11 +69,15 @@ public class ImageService {
         BufferedImage bufferedImage = ImageIO.read(image.getInputStream());
         int height = bufferedImage.getHeight();
         int width = bufferedImage.getWidth();
-        int newHeight = (int) Math.round(height / (double) (width / NEW_WIDTH));
-        BufferedImage resultImage = Scalr.resize(
-                bufferedImage, Scalr.Method.QUALITY, NEW_WIDTH, newHeight);
         String extension = FilenameUtils.getExtension(image.getOriginalFilename());
-        ImageIO.write(resultImage, extension, path.toFile());
+        if (width <= NEW_WIDTH) {
+            ImageIO.write(bufferedImage, extension, path.toFile());
+        } else {
+            int newHeight = (int) Math.round(height / (double) (width / NEW_WIDTH));
+            BufferedImage resultImage = Scalr.resize(
+                    bufferedImage, Scalr.Method.QUALITY, NEW_WIDTH, newHeight);
+            ImageIO.write(resultImage, extension, path.toFile());
+        }
         String load = pathToImage.toString();
         return load.substring(load.lastIndexOf("/upload"));
     }
