@@ -38,7 +38,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/post/byDate")
-    private ResponseEntity<ApiPostListResponse> byDate(
+    public ResponseEntity<ApiPostListResponse> byDate(
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam String date) {

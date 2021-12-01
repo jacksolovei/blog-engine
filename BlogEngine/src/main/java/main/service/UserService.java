@@ -168,15 +168,19 @@ public class UserService {
         int likesCount = posts.stream().map(PostDto::getLikeCount).reduce(0, Integer::sum);
         int disLikesCount = posts.stream().map(PostDto::getDislikeCount).reduce(0, Integer::sum);
         int viewsCount = posts.stream().map(PostDto::getViewCount).reduce(0, Integer::sum);
-        long firstPublication = posts.stream()
-                .map(PostDto::getTimestamp)
-                .min(Long::compare)
-                .orElseThrow(NoSuchElementException::new);
         statResponse.setPostsCount(posts.size());
         statResponse.setLikesCount(likesCount);
         statResponse.setDislikesCount(disLikesCount);
         statResponse.setViewsCount(viewsCount);
-        statResponse.setFirstPublication(firstPublication);
+        if (posts.isEmpty()) {
+            statResponse.setFirstPublication(0);
+        } else {
+            long firstPublication = posts.stream()
+                    .map(PostDto::getTimestamp)
+                    .min(Long::compare)
+                    .orElseThrow(NoSuchElementException::new);
+            statResponse.setFirstPublication(firstPublication);
+        }
         return statResponse;
     }
 

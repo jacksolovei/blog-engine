@@ -9,10 +9,7 @@ import main.dto.CommentDto;
 import main.dto.PostDto;
 import main.dto.UserDto;
 import main.model.*;
-import main.repository.PostRepository;
-import main.repository.PostVoteRepository;
-import main.repository.SettingsRepository;
-import main.repository.UserRepository;
+import main.repository.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +30,7 @@ public class ApiPostService {
     private final UserRepository userRepository;
     private final SettingsRepository settingsRepository;
     private final PostVoteRepository postVoteRepository;
+    private final TagRepository tagRepository;
     private final MapperService mapperService;
     private final AuthCheckService authCheckService;
 
@@ -227,6 +225,11 @@ public class ApiPostService {
             post.setText(postRequest.getText());
             post.setViewCount(0);
             post.setUser(user);
+            List<Tag> tags = postRequest.getTags().stream()
+                    .map(t -> tagRepository.findTagByName(t)
+                            .orElseThrow(NoSuchElementException::new))
+                    .collect(Collectors.toList());
+            post.setTags(tags);
             postRepository.save(post);
         } else {
             regResponse.setResult(false);
@@ -251,6 +254,11 @@ public class ApiPostService {
             post.setTime(postDate.compareTo(new Date()) <= 0 ? new Date() : postDate);
             post.setTitle(postRequest.getTitle());
             post.setText(postRequest.getText());
+            List<Tag> tags = postRequest.getTags().stream()
+                    .map(t -> tagRepository.findTagByName(t)
+                            .orElseThrow(NoSuchElementException::new))
+                    .collect(Collectors.toList());
+            post.setTags(tags);
             postRepository.save(post);
         } else {
             regResponse.setResult(false);

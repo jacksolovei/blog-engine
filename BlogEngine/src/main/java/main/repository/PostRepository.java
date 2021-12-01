@@ -16,62 +16,62 @@ import java.util.Optional;
 public interface PostRepository extends JpaRepository<Post, Integer> {
 
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED' " +
-            "AND time < NOW() ORDER BY time DESC",
+            "AND time <= NOW() ORDER BY time DESC",
             countQuery = "SELECT COUNT(*) FROM posts WHERE is_active = 1 " +
-                    "AND moderation_status = 'ACCEPTED' AND time < NOW()",
+                    "AND moderation_status = 'ACCEPTED' AND time <= NOW()",
             nativeQuery = true)
     Page<Post> findRecentPosts(Pageable pageable);
 
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED' " +
-            "AND time < NOW()",
+            "AND time <= NOW()",
             nativeQuery = true)
     List<Post> findActivePosts();
 
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED' " +
-            "AND time < NOW() ORDER BY time ASC",
+            "AND time <= NOW() ORDER BY time ASC",
             countQuery = "SELECT COUNT(*) FROM posts WHERE is_active = 1 " +
-                    "AND moderation_status = 'ACCEPTED' AND time < NOW()",
+                    "AND moderation_status = 'ACCEPTED' AND time <= NOW()",
             nativeQuery = true)
     Page<Post> findEarlyPosts(Pageable pageable);
 
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 " +
-            "AND moderation_status = 'ACCEPTED' AND posts.time < NOW() " +
+            "AND moderation_status = 'ACCEPTED' AND posts.time <= NOW() " +
             "ORDER BY (SELECT COUNT(*) FROM post_comments WHERE post_id = posts.id) DESC",
             countQuery = "SELECT COUNT(*) FROM posts WHERE is_active = 1 " +
-                    "AND moderation_status = 'ACCEPTED' AND posts.time < NOW()",
+                    "AND moderation_status = 'ACCEPTED' AND posts.time <= NOW()",
             nativeQuery = true)
     Page<Post> findPopularPosts(Pageable pageable);
 
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED' " +
-            "AND posts.time < NOW() ORDER BY (SELECT COUNT(*) FROM post_votes " +
+            "AND posts.time <= NOW() ORDER BY (SELECT COUNT(*) FROM post_votes " +
             "WHERE post_id = posts.id AND value = 1) DESC",
             countQuery = "SELECT COUNT(*) FROM posts WHERE is_active = 1 " +
-                    "AND moderation_status = 'ACCEPTED' AND posts.time < NOW()",
+                    "AND moderation_status = 'ACCEPTED' AND posts.time <= NOW()",
             nativeQuery = true)
     Page<Post> findBestPosts(Pageable pageable);
 
     @Query(value = "SELECT COUNT(*) FROM posts WHERE is_active = 1 " +
-            "AND moderation_status = 'ACCEPTED' AND time < NOW()",
+            "AND moderation_status = 'ACCEPTED' AND time <= NOW()",
             nativeQuery = true)
     int findActivePostsCount();
 
     @Query(value = "SELECT COUNT(post_comments.id) FROM posts " +
             "JOIN post_comments ON posts.id = post_comments.post_id WHERE posts.id = :postId " +
             "AND posts.is_active = 1 AND posts.moderation_status = 'ACCEPTED' " +
-            "AND posts.time < NOW()", nativeQuery = true)
+            "AND posts.time <= NOW()", nativeQuery = true)
     int findPostCommentsCount(@Param("postId") int postId);
 
     @Query(value = "SELECT COUNT(post_votes.id) FROM posts " +
             "JOIN post_votes ON posts.id = post_votes.post_id WHERE posts.id = :postId " +
             "AND posts.is_active = 1 AND posts.moderation_status = 'ACCEPTED' " +
-            "AND posts.time < NOW() AND post_votes.value = 1",
+            "AND posts.time <= NOW() AND post_votes.value = 1",
             nativeQuery = true)
     int findPostLikesCount(@Param("postId") int postId);
 
     @Query(value = "SELECT COUNT(post_votes.id) FROM posts " +
             "JOIN post_votes ON posts.id = post_votes.post_id WHERE posts.id = :postId " +
             "AND posts.is_active = 1 AND posts.moderation_status = 'ACCEPTED' " +
-            "AND posts.time < NOW() AND post_votes.value = -1",
+            "AND posts.time <= NOW() AND post_votes.value = -1",
             nativeQuery = true)
     int findPostDislikesCount(@Param("postId") int postId);
 
@@ -80,56 +80,60 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     int findUnmoderatedPostsCount();
 
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 " +
-            "AND moderation_status = 'ACCEPTED' AND time < NOW() " +
+            "AND moderation_status = 'ACCEPTED' AND time <= NOW() " +
             "AND LOCATE(:query, CONCAT(text, title)) > 0 ORDER BY time DESC",
             countQuery = "SELECT COUNT(*) FROM posts WHERE is_active = 1 " +
-                    "AND moderation_status = 'ACCEPTED' AND time < NOW() " +
+                    "AND moderation_status = 'ACCEPTED' AND time <= NOW() " +
                     "AND LOCATE(:query, CONCAT(text, title)) > 0",
             nativeQuery = true)
     Page<Post> findPostsByQuery(Pageable pageable, @Param("query") String query);
 
-    @Query(value = "SELECT time, COUNT(time) AS count FROM posts WHERE is_active = 1 " +
-            "AND moderation_status = 'ACCEPTED' AND time < NOW() GROUP BY time",
+    @Query(value = "SELECT DATE_FORMAT(posts.time, '%Y-%m-%d') AS date, " +
+            "COUNT(DATE_FORMAT(posts.time, '%Y-%m-%d')) AS count FROM posts WHERE is_active = 1 " +
+            "AND moderation_status = 'ACCEPTED' AND time <= NOW() " +
+            "GROUP BY DATE_FORMAT(posts.time, '%Y-%m-%d') " +
+            "ORDER BY DATE_FORMAT(posts.time, '%Y-%m-%d')",
             nativeQuery = true)
     List<CalendarPostProjection> findPostsInCalendar();
 
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 " +
-            "AND moderation_status = 'ACCEPTED' AND time < NOW() " +
-            "AND time = :date ORDER BY time DESC",
+            "AND moderation_status = 'ACCEPTED' AND time <= NOW() " +
+            "AND DATE_FORMAT(posts.time, '%Y-%m-%d') = :date " +
+            "ORDER BY DATE_FORMAT(posts.time, '%Y-%m-%d') DESC",
             nativeQuery = true,
             countQuery = "SELECT COUNT(*) FROM posts WHERE is_active = 1 " +
-                    "AND moderation_status = 'ACCEPTED' AND time < NOW() " +
-                    "AND time = :date")
+                    "AND moderation_status = 'ACCEPTED' AND time <= NOW() " +
+                    "AND DATE_FORMAT(posts.time, '%Y-%m-%d') = :date")
     Page<Post> findPostsByDate(Pageable pageable, @Param("date") String date);
 
     @Query(value = "SELECT * FROM posts " +
             "JOIN tag2post ON posts.id = tag2post.post_id " +
             "JOIN tags ON tags.id = tag2post.tag_id WHERE is_active = 1 " +
-            "AND moderation_status = 'ACCEPTED' AND posts.time < NOW() " +
+            "AND moderation_status = 'ACCEPTED' AND posts.time <= NOW() " +
             "AND tags.name = :tag",
             nativeQuery = true,
             countQuery = "SELECT COUNT(*) FROM posts " +
                     "JOIN tag2post ON posts.id = tag2post.post_id " +
                     "JOIN tags ON tags.id = tag2post.tag_id WHERE is_active = 1 " +
-                    "AND moderation_status = 'ACCEPTED' AND posts.time < NOW() " +
+                    "AND moderation_status = 'ACCEPTED' AND posts.time <= NOW() " +
                     "AND tags.name = :tag")
     Page<Post> findPostsByTag(Pageable pageable, @Param("tag") String tag);
 
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 " +
-            "AND moderation_status = 'ACCEPTED' AND time < NOW() AND id = :id", nativeQuery = true)
+            "AND moderation_status = 'ACCEPTED' AND time <= NOW() AND id = :id", nativeQuery = true)
     Optional<Post> findActivePostById(@Param("id") int id);
 
     @Query(value = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
             "WHERE posts.is_active = 0 AND users.email = :email",
             nativeQuery = true,
-            countQuery = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
+            countQuery = "SELECT COUNT(*) FROM posts JOIN users ON posts.user_id = users.id " +
                     "WHERE posts.is_active = 0 AND users.email = :email")
     Page<Post> findInactivePosts(Pageable pageable, @Param("email") String email);
 
     @Query(value = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
             "WHERE posts.is_active = 1 AND moderation_status = 'NEW' " +
             "AND users.email = :email", nativeQuery = true,
-            countQuery = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
+            countQuery = "SELECT COUNT(*) FROM posts JOIN users ON posts.user_id = users.id " +
                     "WHERE posts.is_active = 1 AND moderation_status = 'NEW' " +
                     "AND users.email = :email")
     Page<Post> findPendingPosts(Pageable pageable, @Param("email") String email);
@@ -137,7 +141,7 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     @Query(value = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
             "WHERE posts.is_active = 1 AND moderation_status = 'DECLINED' " +
             "AND users.email = :email", nativeQuery = true,
-            countQuery = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
+            countQuery = "SELECT COUNT(*) FROM posts JOIN users ON posts.user_id = users.id " +
                     "WHERE posts.is_active = 1 AND moderation_status = 'DECLINED' " +
                     "AND users.email = :email")
     Page<Post> findDeclinedPosts(Pageable pageable, @Param("email") String email);
@@ -145,14 +149,15 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     @Query(value = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
             "WHERE posts.is_active = 1 AND moderation_status = 'ACCEPTED' " +
             "AND users.email = :email", nativeQuery = true,
-            countQuery = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
+            countQuery = "SELECT COUNT(*) FROM posts JOIN users ON posts.user_id = users.id " +
                     "WHERE posts.is_active = 1 AND moderation_status = 'ACCEPTED' " +
                     "AND users.email = :email")
     Page<Post> findPublishedPosts(Pageable pageable, @Param("email") String email);
 
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'NEW'",
             nativeQuery = true,
-            countQuery = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'NEW'")
+            countQuery = "SELECT COUNT(*) FROM posts WHERE is_active = 1 " +
+                    "AND moderation_status = 'NEW'")
     Page<Post> findNewPosts(Pageable pageable);
 
     @Query(value = "SELECT * FROM posts JOIN users ON posts.user_id = users.id " +
@@ -162,7 +167,7 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'ACCEPTED' " +
             "AND moderator_id = :moderator_id", nativeQuery = true,
-            countQuery = "SELECT * FROM posts WHERE is_active = 1 " +
+            countQuery = "SELECT COUNT(*) FROM posts WHERE is_active = 1 " +
                     "AND moderation_status = 'ACCEPTED' " +
                     "AND moderator_id = :moderator_id")
     Page<Post> findAcceptedPostsByModerator(Pageable pageable,
@@ -170,7 +175,7 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 
     @Query(value = "SELECT * FROM posts WHERE is_active = 1 AND moderation_status = 'DECLINED' " +
             "AND moderator_id = :moderator_id", nativeQuery = true,
-            countQuery = "SELECT * FROM posts WHERE is_active = 1 " +
+            countQuery = "SELECT COUNT(*) FROM posts WHERE is_active = 1 " +
                     "AND moderation_status = 'DECLINED' " +
                     "AND moderator_id = :moderator_id")
     Page<Post> findDeclinedPostsByModerator(Pageable pageable,
