@@ -1,9 +1,10 @@
-spring.datasource.url: jdbc:mysql://localhost:3306/blog?useUnicode=true&characterEncoding=utf8&serverTimeZone=UTC
+spring.datasource.url: jdbc:${JAWSDB_URL:mysql://localhost:3306/blog?useUnicode=true&characterEncoding=utf8&serverTimeZone=UTC}
 spring.datasource.username: root
 spring.datasource.password: Khol@1406
 spring.jpa.properties.hibernate.dialect: org.hibernate.dialect.MySQL5Dialect
 spring.jpa.hibernate.ddl-auto: validate
 spring.jpa.show-sql: true
+server.port: ${PORT:8080}
 
 spring.mail.host: smtp.gmail.com
 spring.mail.port: 587
